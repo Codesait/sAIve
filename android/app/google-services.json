@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "437935610778",
+    "project_id": "saive-eaa4e",
+    "storage_bucket": "saive-eaa4e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:437935610778:android:73c5355e421d7bc864b823",
+        "android_client_info": {
+          "package_name": "com.example.saive"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB58vL7eDE3m_I-pLxKAdYJcVnZJ5tsQcg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
