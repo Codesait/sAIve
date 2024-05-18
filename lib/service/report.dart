@@ -28,7 +28,7 @@ class Report {
           'longitude': longitude,
           'latitude': latitude,
           'address': address,
-          'reportStatus': 'STANDBY',
+          'reportStatus': 'SAFE',
           'createdAt': DateTime.now().toString(),
         },
       }).then((value) {

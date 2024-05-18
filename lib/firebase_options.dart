@@ -52,6 +52,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '437935610778',
     projectId: 'saive-eaa4e',
     authDomain: 'saive-eaa4e.firebaseapp.com',
+    databaseURL: 'https://saive-eaa4e-default-rtdb.firebaseio.com',
     storageBucket: 'saive-eaa4e.appspot.com',
     measurementId: 'G-TW7W0WPQH8',
   );
@@ -61,6 +62,7 @@ class DefaultFirebaseOptions {
     appId: '1:437935610778:android:73c5355e421d7bc864b823',
     messagingSenderId: '437935610778',
     projectId: 'saive-eaa4e',
+    databaseURL: 'https://saive-eaa4e-default-rtdb.firebaseio.com',
     storageBucket: 'saive-eaa4e.appspot.com',
   );
 
@@ -69,7 +71,9 @@ class DefaultFirebaseOptions {
     appId: '1:437935610778:ios:3117c3c75a4bdf4164b823',
     messagingSenderId: '437935610778',
     projectId: 'saive-eaa4e',
+    databaseURL: 'https://saive-eaa4e-default-rtdb.firebaseio.com',
     storageBucket: 'saive-eaa4e.appspot.com',
     iosBundleId: 'com.example.saive',
   );
+
 }

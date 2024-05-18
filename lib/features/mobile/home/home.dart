@@ -299,6 +299,18 @@ class _PanicWidgetState extends State<_PanicWidget> {
     final size = MediaQuery.of(context).size;
     final myReportStats = widget.myReport;
 
+    String locationTimeline() {
+      if (myReportStats['reportStatus'] == 'IN_TROUBLE' &&
+          _currentAddress != null) {
+        return 'Last location: ${_currentAddress!}';
+      } else if (myReportStats['reportStatus'] == 'IN_TROUBLE' &&
+          _currentAddress == null) {
+        return 'Last location: ${myReportStats['address']!}';
+      } else {
+        return '';
+      }
+    }
+
     return Container(
       width: size.width,
       padding: const EdgeInsets.symmetric(
@@ -325,7 +337,7 @@ class _PanicWidgetState extends State<_PanicWidget> {
                 if (myReportStats['reportStatus'] == 'IN_TROUBLE') {
                   startOrStoplocationPing(
                     reportId: myReportStats['id'],
-                    status: 'STANDBY',
+                    status: 'SAFE',
                   );
                 } else {
                   startOrStoplocationPing(
@@ -352,9 +364,7 @@ class _PanicWidgetState extends State<_PanicWidget> {
           Visibility(
             visible: (_currentAddress != null),
             child: Text(
-              _currentAddress != null
-                  ? 'Last location: ${_currentAddress!}'
-                  : '',
+              locationTimeline(),
               style: GoogleFonts.aBeeZee(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
