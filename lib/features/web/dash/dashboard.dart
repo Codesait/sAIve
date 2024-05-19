@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:saive/app/color.dart';
 import 'package:saive/service/report.dart';
 
 class Dashboard extends StatefulWidget {
@@ -15,11 +16,25 @@ class Dashboard extends StatefulWidget {
   State<Dashboard> createState() => _DashboardState();
 }
 
-class _DashboardState extends State<Dashboard> {
+class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
   bool showList = false;
 
   // ignore: prefer_final_fields
-  List<dynamic> _reports = [];
+  List<dynamic> _allReports = [];
+
+  List<dynamic> _realTimePanics = [];
+
+  final tabs = <Tab>[
+    const Tab(
+      text: 'Panics',
+      height: 40,
+    ),
+    //const Tab(text: bankAccount),
+    const Tab(
+      text: 'All Time',
+      height: 40,
+    ),
+  ];
 
   @override
   void initState() {
@@ -54,15 +69,48 @@ class _DashboardState extends State<Dashboard> {
                 height: size.height,
                 duration: const Duration(milliseconds: 100),
                 child: _MapWidget(
-                  reports: _reports,
+                  reports: _allReports,
                 ),
               ),
             ),
             Positioned(
               left: 0,
               child: Visibility(
-                  visible: showList, child: _AllReports(reports: _reports)),
-            )
+                visible: showList,
+                child: DefaultTabController(
+                  initialIndex: 0,
+                  length: tabs.length,
+                  child: Column(
+                    children: [
+                      PreferredSize(
+                        preferredSize: Size(size.width, 60),
+                        child: TabBar(
+                          dividerColor: AppColors.primary,
+                          physics: const BouncingScrollPhysics(),
+                          labelColor: AppColors.primary,
+                          unselectedLabelColor: Colors.blueGrey,
+                          indicatorColor: Colors.transparent,
+                          labelStyle:
+                              const TextStyle(fontWeight: FontWeight.bold),
+                          unselectedLabelStyle:
+                              const TextStyle(fontWeight: FontWeight.normal),
+                          isScrollable: true,
+                          tabs: tabs,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 350,
+                        height: size.height / 1.1,
+                        child: TabBarView(children: [
+                          _AllReports(reports: _realTimePanics),
+                          _AllReports(reports: _allReports)
+                        ]),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -106,22 +154,30 @@ class _DashboardState extends State<Dashboard> {
               dataSnapshot.value as Map<dynamic, dynamic>;
 
           if (values.isNotEmpty) {
-            _reports.clear();
+            _allReports.clear();
             //* stop loader indicator
             BotToast.closeAllLoading();
 
             //* then set ui data
             setState(() {
+              // All reports
               values.forEach((key, value) {
-                
-                _reports.add({
+                _allReports.add({
                   'id': key,
                   ...value['data'],
                 });
               });
 
+              /// The line `_realTimePanics = _allReports.where((report) => report['reportStatus:'] !=
+              /// 'SAFE').toList();` is filtering the `_allReports` list to create a new list
+              /// `_realTimePanics` that contains only the reports where the value of the key
+              /// `'reportStatus'` is not equal to `'SAFE'`.
+              _realTimePanics = _allReports
+                  .where((report) => report['reportStatus'] != 'SAFE')
+                  .toList();
+
               if (kDebugMode) {
-                print('REPORTS $_reports');
+                print('REPORTS $_allReports');
               }
             });
           }

@@ -5,6 +5,7 @@ import 'package:saive/features/mobile/auth/login.dart';
 import 'package:saive/features/mobile/auth/user_auth.dart';
 import 'package:saive/features/mobile/home/home.dart';
 import 'package:saive/features/mobile/intro/splash_screen.dart';
+import 'package:saive/features/mobile/settings/settings.dart';
 import 'package:saive/features/web/dash/dashboard.dart';
 import 'package:saive/features/web/into/web_splash.dart';
 import 'package:saive/router/route_names.dart';
@@ -50,6 +51,15 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           return const HomePage(
             key: Key('home-screen-route'),
+          );
+        },
+      ),
+        GoRoute(
+        path: '/settings',
+        name: NamedRoutes.settings.name,
+        builder: (BuildContext context, GoRouterState state) {
+          return const Settings(
+            key: Key('settings-screen-route'),
           );
         },
       ),

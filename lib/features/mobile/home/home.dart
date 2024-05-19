@@ -8,14 +8,18 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:saive/app/color.dart';
 import 'package:saive/router/route_names.dart';
 import 'package:saive/service/auth_service.dart';
 import 'package:saive/service/location.dart';
 import 'package:saive/service/report.dart';
+import 'package:saive/service/settings_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -43,6 +47,8 @@ class _HomePageState extends State<HomePage> {
 
   final reportService = Report();
   final locationService = EQLocationService();
+
+  final settingService = SettingsService();
 
   Future<void> initDash() async {
     /**
@@ -115,7 +121,11 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     titleController = TextEditingController();
     descController = TextEditingController();
-    initDash();
+    initDash().whenComplete(
+      () => settingService.modPrefPrompt(context),
+    );
+
+    fetchUserProfile();
 
     super.initState();
   }
@@ -124,6 +134,31 @@ class _HomePageState extends State<HomePage> {
   void didChangeDependencies() {
     locationService.handleLocationPermission(context);
     super.didChangeDependencies();
+  }
+
+  String? nameController;
+  String? phoneController;
+
+  String? contct1Controller;
+  String? contct2Controller;
+
+  String? statusController;
+
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
+  Future<void> fetchUserProfile() async {
+    final prefs = await _prefs;
+
+    nameController = prefs.getString('fullName');
+    phoneController = prefs.getString('phoneNumber');
+
+    contct1Controller = prefs.getString('contct1');
+    contct2Controller = prefs.getString('contct2');
+
+    statusController = prefs.getString('status');
+    setState(() {});
+
+    log('name: $nameController');
   }
 
   @override
@@ -135,6 +170,16 @@ class _HomePageState extends State<HomePage> {
         context.pushReplacementNamed(NamedRoutes.splash.name);
       },
       child: Scaffold(
+        appBar: AppBar(
+          actions: [
+            IconButton(
+              onPressed: () {
+                context.pushNamed(NamedRoutes.settings.name);
+              },
+              icon: const Icon(Icons.settings),
+            )
+          ],
+        ),
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: () {
@@ -150,13 +195,26 @@ class _HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
-                            flex: 3,
+                            flex: 2,
                             child: _UserWidget(userDetails: user!),
                           ),
                           Expanded(
-                            flex: 7,
-                            child: _PanicWidget(
-                              myReport: _report,
+                            flex: 8,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  _PanicWidget(
+                                    myReport: _report,
+                                  ),
+                                  _report['reportStatus'] == 'IN_TROUBLE'
+                                      ? _AiWidget(
+                                          name: nameController,
+                                          location: _report['address'],
+                                          lastStatus: statusController,
+                                        )
+                                      : const SizedBox()
+                                ],
+                              ),
                             ),
                           )
                         ],
@@ -168,11 +226,11 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {},
-          backgroundColor: Colors.blue,
-          child: const Icon(Icons.report),
-        ),
+        // floatingActionButton: FloatingActionButton(
+        //   onPressed: () {},
+        //   backgroundColor: Colors.blue,
+        //   child: const Icon(Icons.report),
+        // ),
       ),
     );
   }
@@ -231,7 +289,7 @@ class _UserWidget extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(100),
             child: CachedNetworkImage(
-              imageUrl: userDetails.photoURL ?? '',
+              imageUrl: userDetails.photoURL ?? 'https://google.com',
               height: 10,
               fit: BoxFit.cover,
               errorWidget: (context, url, error) => CircleAvatar(
@@ -254,32 +312,6 @@ class _UserWidget extends StatelessWidget {
               color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
         ),
         const SizedBox.square(dimension: 10),
-        SizedBox(
-          width: 130,
-          child: ElevatedButton(
-            onPressed: () {
-              AuthService().signOut(context).then((value) {
-                context.pushReplacementNamed(NamedRoutes.signIn.name);
-              });
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Logout ',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                Icon(
-                  Icons.exit_to_app_rounded,
-                  color: Colors.white,
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox.square(dimension: 10),
       ],
     );
   }
@@ -294,6 +326,7 @@ class _PanicWidget extends StatefulWidget {
 }
 
 class _PanicWidgetState extends State<_PanicWidget> {
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -312,6 +345,7 @@ class _PanicWidgetState extends State<_PanicWidget> {
     }
 
     return Container(
+      height: 250,
       width: size.width,
       padding: const EdgeInsets.symmetric(
         horizontal: 30,
@@ -333,17 +367,25 @@ class _PanicWidgetState extends State<_PanicWidget> {
                   : Colors.green,
             ),
             child: IconButton(
-              onPressed: () {
-                if (myReportStats['reportStatus'] == 'IN_TROUBLE') {
-                  startOrStoplocationPing(
-                    reportId: myReportStats['id'],
-                    status: 'SAFE',
-                  );
+              onPressed: () async {
+                final prefs = await _prefs;
+                String? fn = prefs.getString('fullName');
+
+                if (fn != null) {
+                  if (myReportStats['reportStatus'] == 'IN_TROUBLE') {
+                    startOrStoplocationPing(
+                      reportId: myReportStats['id'],
+                      status: 'SAFE',
+                    );
+                  } else {
+                    startOrStoplocationPing(
+                      reportId: myReportStats['id'],
+                      status: 'IN_TROUBLE',
+                    );
+                  }
                 } else {
-                  startOrStoplocationPing(
-                    reportId: myReportStats['id'],
-                    status: 'IN_TROUBLE',
-                  );
+                  // ignore: use_build_context_synchronously
+                  SettingsService().modPrefPrompt(context);
                 }
               },
               color: Colors.white,
@@ -423,6 +465,93 @@ class _PanicWidgetState extends State<_PanicWidget> {
     } finally {
       BotToast.closeAllLoading();
     }
+  }
+}
+
+class _AiWidget extends StatefulWidget {
+  const _AiWidget({this.name, this.location, this.lastStatus});
+  final String? name;
+  final String? location;
+  final String? lastStatus;
+
+  @override
+  State<_AiWidget> createState() => __AiWidgetState();
+}
+
+class __AiWidgetState extends State<_AiWidget> {
+  final gemini = Gemini.instance;
+
+  String aiResponse = '';
+
+  void runAi() {
+    String prompt = 'In a well formatted response'
+        ' this user by the name ${widget.name} is in a panic emergency'
+        'while in school or should be in school,'
+        'in location: ${widget.location} and their last status was "${widget.lastStatus}".'
+        'use this infomation to provide tips on what to do and escape the emergency in a calming'
+        'response, Response should not be formal or be in form of a letter';
+    gemini.streamGenerateContent(prompt).listen((value) {
+      setState(() {
+        aiResponse += value.output!;
+      });
+    }).onError((e) {
+      log('streamGenerateContent exception', error: e);
+    });
+
+    // gemini.streamGenerateContent(prompt).listen((event) {
+    //   print(event.output);
+    // }).onData((v) {
+    //   setState(() {
+    //     aiResponse = v.output!;
+    //   });
+    // });
+  }
+
+  @override
+  void initState() {
+    runAi();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 300,
+      width: MediaQuery.of(context).size.width,
+      margin: const EdgeInsets.symmetric(horizontal: 30),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(.3),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text.rich(
+            TextSpan(text: 'sAIve Ai ', children: [
+              TextSpan(
+                  text: 'powered by Gemini',
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber)),
+            ]),
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox.square(dimension: 10),
+          SizedBox(
+            height: 230,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Text(aiResponse),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
