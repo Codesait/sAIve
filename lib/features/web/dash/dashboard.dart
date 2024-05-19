@@ -69,7 +69,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
                 height: size.height,
                 duration: const Duration(milliseconds: 100),
                 child: _MapWidget(
-                  reports: _allReports,
+                  reports: _realTimePanics,
                 ),
               ),
             ),
@@ -367,7 +367,7 @@ class __MapWidgetState extends State<_MapWidget> {
     ///* title, `0.0` for latitude and longitude, and an empty string for id) using the null-aware
     ///* operator `??`.
     for (var reportItem in widget.reports) {
-      String title = reportItem['title'] ?? 'Unknown Title';
+      String title = reportItem['reportDescription'] ?? 'Unknown Title';
       var latitude = reportItem['latitude'];
       var longitude = reportItem['longitude'];
       String id = reportItem['id'] ?? '';

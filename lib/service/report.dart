@@ -44,12 +44,16 @@ class Report {
     }
   }
 
-
   Future<dynamic> updateReport({
     required String reportId,
     required String longitude,
     required String latitude,
     required String status,
+    String? name,
+    String? phone,
+    String? contct1,
+    String? contct2,
+    String? lastStatus,
     String? address,
   }) async {
     BotToast.showLoading();
@@ -60,6 +64,12 @@ class Report {
           'latitude': latitude,
           'address': address,
           'reportStatus': status,
+          'reportDescription': "Victim's Name: $name,\n"
+              "Victim's Phone Number: $phone\n\n"
+              "Victim's Close Contacts:\n"
+              " $contct1\n"
+              " $contct2\n\n"
+              "My last Status: $lastStatus",
           'createdAt': DateTime.now().toString(),
         },
       }).whenComplete(() {

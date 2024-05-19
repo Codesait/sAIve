@@ -205,6 +205,11 @@ class _HomePageState extends State<HomePage> {
                                 children: [
                                   _PanicWidget(
                                     myReport: _report,
+                                    name: nameController,
+                                    phone: phoneController,
+                                    contct1: contct1Controller,
+                                    contct2: contct2Controller,
+                                    lastStatus: statusController,
                                   ),
                                   _report['reportStatus'] == 'IN_TROUBLE'
                                       ? _AiWidget(
@@ -318,8 +323,19 @@ class _UserWidget extends StatelessWidget {
 }
 
 class _PanicWidget extends StatefulWidget {
-  const _PanicWidget({required this.myReport});
+  const _PanicWidget(
+      {required this.myReport,
+      this.name,
+      this.phone,
+      this.contct1,
+      this.contct2,
+      this.lastStatus});
   final Map<dynamic, dynamic> myReport;
+  final String? name;
+  final String? phone;
+  final String? contct1;
+  final String? contct2;
+  final String? lastStatus;
 
   @override
   State<_PanicWidget> createState() => _PanicWidgetState();
@@ -439,6 +455,7 @@ class _PanicWidgetState extends State<_PanicWidget> {
       });
 
       BotToast.showLoading();
+
       //*use positions to get address
       await locationService
           .getAddressFromLatLng(_currentPosition!)
@@ -459,6 +476,11 @@ class _PanicWidgetState extends State<_PanicWidget> {
         latitude: _currentPosition!.latitude.toString(),
         address: _currentAddress,
         status: status,
+        name: widget.name,
+        phone: widget.phone,
+        contct1: widget.contct1,
+        contct2: widget.contct2,
+        lastStatus: widget.lastStatus,
       );
     } catch (e) {
       log(e.toString());
@@ -484,12 +506,14 @@ class __AiWidgetState extends State<_AiWidget> {
   String aiResponse = '';
 
   void runAi() {
-    String prompt = 'In a well formatted response'
+    String prompt = 'In a well formatted and spaced out response'
         ' this user by the name ${widget.name} is in a panic emergency'
-        'while in school or should be in school,'
+        'while they should be in school,'
         'in location: ${widget.location} and their last status was "${widget.lastStatus}".'
         'use this infomation to provide tips on what to do and escape the emergency in a calming'
-        'response, Response should not be formal or be in form of a letter';
+        'response, Response should not be formal or be in form of a letter'
+        'Always include the name,loaction in the response'
+        'Also Mention that their live location has been share with quick responders';
     gemini.streamGenerateContent(prompt).listen((value) {
       setState(() {
         aiResponse += value.output!;
